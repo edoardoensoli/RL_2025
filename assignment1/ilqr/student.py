@@ -21,20 +21,33 @@ class ILqr:
         
     def backward(self, x_seq, u_seq):
         
-        pt1 = self.getq(x_seq[-1],u_seq[-1])
-        Pt1 = self.getQ(x_seq[-1],u_seq[-1])
+        pt1 = self.getq(x_seq[-1],u_seq[-1]) # gradient of the cost of final state
+        Pt1 = self.getQ(x_seq[-1],u_seq[-1]) # Hessian of the cost of the final state
         
         k_seq = []
         K_seq = []
+
+        # P,Q,R,K, .. describes the quadratic curve (matrices)
+        # p,q,r,k, .. describes the linear term (vector)
+
+        # in the backward pass we compute the earnings
+
+        # kt is the feedforward
+        # Kt is the feedback 
+        # kt and Kt helps to improve the control computing the gains
+
+        # we get a local quadratic approximation of the total cost (immidiate + future)
         
         for t in range(self.horizon-1,-1,-1):
 
             xt = x_seq[t]
             ut = u_seq[t]
             
+            # linearizzation of dynamics
             At = self.getA(xt,ut)
             Bt = self.getB(xt,ut)
             
+            # linearizzation of the cost
             qt = self.getq(xt,ut)
             rt = self.getr(xt,ut)
             
@@ -43,14 +56,16 @@ class ILqr:
 
             # TODO
             kt = - np.linalg.inv(Rt + Bt.T @ Pt1 @ Bt) @ (rt + Bt.T @ pt1)
-            Kt = 
+            Kt = - np.linalg.inv(Rt + Bt.T @ Pt1 @ Bt) @ Bt.T @ Pt1 @ At
             # TODO
-            pt = ...
-            Pt = ...
+            pt = (qt + At.T @ pt1) - (Bt.T @ Pt1 @ At).T @ np.linalg.inv(Rt + Bt.T @ Pt1 @ Bt) @ (rt + Bt.T @ pt1)
+            Pt = (Qt + At.T @ Pt1 @ At) - (Bt.T @ Pt1 @ At).T @ np.linalg.inv(Rt + Bt.T @ Pt1 @ Bt) @ (Bt.T @ Pt1 @ At)
 
+            # represent the slope and curvature of the value at timestamp t
             pt1 = pt
             Pt1 = Pt
 
+            # we save the gains
             k_seq.append(kt)
             K_seq.append(Kt)
         
@@ -61,12 +76,15 @@ class ILqr:
     
     def forward(self, x_seq, u_seq, k_seq, K_seq):
         
+        # list of states
         x_seq_hat = np.array(x_seq)
+        # list of actions/controls
         u_seq_hat = np.array(u_seq)
         
+        # we apply the gains (kt and Kt) to correct the control
         for t in range(len(u_seq)):
             # TODO
-            control = ...
+            control = k_seq[t] + K_seq[t] @ (x_seq_hat[t] - x_seq[t])
             
             # clip controls to the actual range from gymnasium
             u_seq_hat[t] = np.clip(u_seq[t] + control,-2,2)
