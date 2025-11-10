@@ -94,8 +94,6 @@ def value_iteration(env, env_size, end_state, directions, obstacles, gamma=0.99,
     return policy.reshape((env_size, env_size)), values.reshape((env_size, env_size))
 
 def policy_iteration(env, env_size, end_state, directions, obstacles, gamma=0.99, max_iters=1000, theta=1e-3):
-    # rename to policy
-    
     # policy evaluation 
     policy = np.random.randint(0, env.action_space.n, (env.observation_space.n))
     values = np.random.random(env_size*env_size)
