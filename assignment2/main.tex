@@ -1,0 +1,281 @@
+% filepath: c:\Users\Edoardo\Documents\GitHub\RL_2025\assignment2\main.tex
+\documentclass[11pt,a4paper]{article}
+
+% -----------------------------------------------
+% PACCHETTI BASE
+% -----------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% -----------------------------------------------
+% IMPOSTAZIONI PAGINA
+% -----------------------------------------------
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+\setstretch{1.2}
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{0pt}
+
+% -----------------------------------------------
+% LINK E COLORI
+% -----------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% -----------------------------------------------
+% PYTHON CODE
+% -----------------------------------------------
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+    frame=tb,
+    language=Python,
+    aboveskip=3mm,
+    belowskip=3mm,
+    showstringspaces=false,
+    columns=flexible,
+    basicstyle={\small\ttfamily},
+    numbers=none,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{dkgreen},
+    stringstyle=\color{mauve},
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=3
+}
+
+% -----------------------------------------------
+% FRONTESPIZIO
+% -----------------------------------------------
+\title{\textbf{Report Assignment 2}\\
+\vspace{0.3em}
+\large Reinforcement Learning -- A.Y. 2025/2026}
+\author{Edoardo Ensoli \\ Student ID: 1918623 \\ \texttt{ensoli.1918623@studenti.uniroma1.it}}
+\date{\today}
+
+% -----------------------------------------------
+% DOCUMENTO
+% -----------------------------------------------
+\begin{document}
+
+\maketitle
+
+% -----------------------------------------------
+\section*{Theory}
+
+\section{Compute the Update of Q-Learning and SARSA}
+
+Given the following Q-table:
+\[
+Q(s,a) = \begin{pmatrix} 2 & 1 \\ 5 & 3 \end{pmatrix} = \begin{pmatrix} Q(1,1) & Q(1,2) \\ Q(2,1) & Q(2,2) \end{pmatrix}
+\]
+
+Assume that $\alpha = 0.3$, $\gamma = 0.5$. After an experience $(s, a, r, s') = (1, 1, 4, 2)$, we compute the update for both Q-learning and SARSA. For SARSA, we consider $a' = \pi_{\epsilon}(s') = 1$.
+
+\subsection{Q-Learning}
+
+Q-Learning is an \textbf{off-policy} temporal-difference algorithm. It updates the Q-table by assuming that in the next state, the agent will choose the action with the maximum Q-value, regardless of the action actually selected by the policy.
+
+The update rule is:
+$$Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right]$$
+
+In this case, the maximum value in state $s' = 2$ is computed between $Q(2,1) = 5$ and $Q(2,2) = 3$, yielding $\max_{a'} Q(2, a') = 5$.
+
+Substituting the values:
+\begin{align*}
+Q(1, 1) &\leftarrow 2 + 0.3 \cdot \left[ 4 + 0.5 \cdot 5 - 2 \right] \\
+&= 2 + 0.3 \cdot \left[ 4 + 2.5 - 2 \right] \\
+&= 2 + 0.3 \cdot 4.5 \\
+&= 2 + 1.35 \\
+&= \mathbf{3.35}
+\end{align*}
+
+\textbf{Result:} $Q(1, 1) = 3.35$
+
+\subsection{SARSA}
+
+SARSA (State-Action-Reward-State-Action) is an \textbf{on-policy} temporal-difference algorithm. It updates the Q-table based on the action $a'$ actually selected by the policy in state $s'$, rather than the maximum Q-value.
+
+The update rule is:
+$$Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma Q(s', a') - Q(s, a) \right]$$
+
+Given that $s' = 2$ and $a' = 1$ (chosen by the policy), we have $Q(s', a') = Q(2, 1) = 5$. Note that in this case, the chosen action coincidentally has the maximum Q-value.
+
+Substituting the values:
+\begin{align*}
+Q(1, 1) &\leftarrow 2 + 0.3 \cdot \left[ 4 + 0.5 \cdot 5 - 2 \right] \\
+&= 2 + 0.3 \cdot 4.5 \\
+&= 2 + 1.35 \\
+&= \mathbf{3.35}
+\end{align*}
+
+\textbf{Result:} $Q(1, 1) = 3.35$
+
+\textbf{Key Difference:} Although the result is the same in this specific case, the fundamental difference is:
+\begin{itemize}
+    \item \textbf{Q-Learning:} Always uses $\max_{a'} Q(s', a')$ (off-policy, learns the optimal policy)
+    \item \textbf{SARSA:} Uses $Q(s', a')$ where $a'$ is the action actually taken (on-policy, learns the policy being followed)
+\end{itemize}
+
+% -----------------------------------------------
+
+\section{Proof: $n$-step Error as Sum of TD Errors}
+
+We prove that the $n$-step error can be expressed as a sum of one-step TD errors, under the assumption that value estimates remain constant from step to step:
+\[
+G_{t:t+n} - V_{t+n-1}(S_t)
+= \sum_{k=t}^{t+n-1} \gamma^{k-t}\,\delta_k
+\]
+
+\textbf{Definitions:}
+
+The $n$-step return is defined as:
+\[
+G_{t:t+n}
+= R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{n-1} R_{t+n}
+  + \gamma^{n} V_{t+n-1}(S_{t+n})
+\]
+
+The one-step TD error at time $k$ is:
+\[
+\delta_k = R_{k+1}
+          + \gamma V_{t+n-1}(S_{k+1})
+          - V_{t+n-1}(S_k)
+\]
+
+\textbf{Proof:}
+
+Substituting the definition of $\delta_k$ into the sum on the right-hand side:
+\begin{align*}
+\sum_{k=t}^{t+n-1} \gamma^{k-t}\,\delta_k
+&= \sum_{k=t}^{t+n-1}
+   \gamma^{k-t}\left(R_{k+1}
+   + \gamma V_{t+n-1}(S_{k+1})
+   - V_{t+n-1}(S_k)\right) \\[6pt]
+&= \sum_{k=t}^{t+n-1} \gamma^{k-t} R_{k+1}
+   + \sum_{k=t}^{t+n-1} \gamma^{k-t+1}
+     V_{t+n-1}(S_{k+1})
+   - \sum_{k=t}^{t+n-1} \gamma^{k-t}
+     V_{t+n-1}(S_k)
+\end{align*}
+
+The last two sums form a \textbf{telescoping series}. Each term $\gamma^{k-t+1}V_{t+n-1}(S_{k+1})$ in the second sum cancels with the corresponding term $-\gamma^{k-t}V_{t+n-1}(S_k)$ in the third sum (shifted by one index). After cancellation, only the first and last terms remain:
+\[
+\sum_{k=t}^{t+n-1} \gamma^{k-t+1} V_{t+n-1}(S_{k+1})
+-
+\sum_{k=t}^{t+n-1} \gamma^{k-t} V_{t+n-1}(S_k)
+=
+\gamma^{n}V_{t+n-1}(S_{t+n})
+-
+V_{t+n-1}(S_t)
+\]
+
+Combining this with the reward sum:
+\begin{align*}
+\sum_{k=t}^{t+n-1}\gamma^{k-t}\delta_k
+&= \sum_{k=t}^{t+n-1}\gamma^{k-t}R_{k+1}
+   + \gamma^{n}V_{t+n-1}(S_{t+n})
+   - V_{t+n-1}(S_t) \\[6pt]
+&= G_{t:t+n} - V_{t+n-1}(S_t)
+\end{align*}
+
+Thus, the $n$-step error is exactly the discounted sum of one-step TD errors. \textbf{Q.E.D.}
+
+\textbf{Interpretation:} This result shows that multi-step returns can be decomposed into a sum of single-step TD errors, which is fundamental for understanding eligibility traces and TD($\lambda$) algorithms.
+
+% -----------------------------------------------
+\section*{Practical}
+
+\section{SARSA($\lambda$) -- Taxi Environment}
+
+SARSA($\lambda$) combines on-policy learning with eligibility traces for faster convergence. The epsilon-greedy policy balances exploration and exploitation by selecting the best action with probability $(1-\epsilon)$ or a random action with probability $\epsilon$.
+
+The core update mechanism uses eligibility traces to propagate TD errors backward through recently visited states:
+
+\begin{lstlisting}
+delta = reward + gamma * Q[next_state, next_action] - Q[state, action]
+E[state, action] = E[state, action] + 1
+Q = Q + alpha * delta * E
+E = gamma * lambda_ * E
+\end{lstlisting}
+
+The eligibility trace $E(s,a)$ tracks how recently each state-action pair was visited. After computing the TD error, we increment the current state-action's eligibility, update the entire Q-table proportionally to eligibility, and decay all traces for the next step. This allows rewards to be assigned to all recent state-actions in a single update, significantly accelerating learning compared to standard SARSA.
+
+% -----------------------------------------------
+
+\section{Linear Value Function Approximation with RBF Features -- Mountain Car}
+
+For continuous state spaces like Mountain Car, tabular Q-learning is infeasible. We use linear function approximation: $Q(s,a) = \mathbf{w}_a^T \phi(s)$, where $\phi(s)$ are features extracted using Radial Basis Functions (RBFs).
+
+\subsection{RBF Feature Encoder}
+
+The RBF encoder transforms states into a 200-dimensional feature space by sampling 10,000 random states, normalizing them with StandardScaler, and creating 4 RBF samplers with different gamma values (5.0, 2.0, 1.0, 0.5) to capture features at multiple scales:
+
+\begin{lstlisting}
+observation_examples = np.array([env.observation_space.sample() 
+                                  for _ in range(10000)])
+self.scaler = sklearn.preprocessing.StandardScaler()
+self.scaler.fit(observation_examples)
+
+self.featurizer = sklearn.pipeline.FeatureUnion([
+    ("rfb1", RBFSampler(gamma=5.0, n_components=50)),
+    ("rfb2", RBFSampler(gamma=2.0, n_components=50)),
+    ("rfb3", RBFSampler(gamma=1.0, n_components=50)),
+    ("rfb4", RBFSampler(gamma=0.5, n_components=50))
+])
+
+scaled_examples = self.scaler.transform(observation_examples)
+self.featurizer.fit(scaled_examples)
+\end{lstlisting}
+
+High gamma values capture local features (narrow RBFs), while low gamma values capture global patterns (wide RBFs). Each state is encoded by scaling it and transforming through the RBF pipeline.
+
+\subsection{TD($\lambda$) with Linear Function Approximation}
+
+The update uses replacing traces instead of accumulating traces. After encoding states into features, we compute the TD error and update weights for all actions:
+
+\begin{lstlisting}
+s_feats = self.feature_encoder.encode(s)
+s_prime_feats = self.feature_encoder.encode(s_prime)
+
+Q_current = self.Q(s_feats)[action, 0]
+if done:
+    td_target = reward
+else:
+    td_target = reward + self.gamma * self.Q(s_prime_feats).max()
+
+delta_t = td_target - Q_current
+
+self.traces *= self.gamma * self.lambda_
+self.traces[action] = s_feats
+
+self.weights += self.alpha * delta_t * self.traces
+\end{lstlisting}
+
+Replacing traces (setting \texttt{traces[action] = s\_feats} instead of accumulating) often performs better with function approximation. The weight update propagates the TD error to all actions based on their eligibility, enabling generalization across similar states.
+
+\end{document}
