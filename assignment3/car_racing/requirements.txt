@@ -1,6 +1,7 @@
 numpy
 scipy
-gymnasium
-gymnasium[box2d]
+gymnasium<1.0.0
+box2d
+pygame
 scikit-learn
 torch
